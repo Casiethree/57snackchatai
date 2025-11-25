@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Snackchat AI v4.8 | Manekchowk Edition</title>
+  <meta name="theme-color" content="#000000" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+  <style>
+    :root {
+      --bg: #000000;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --lime: #ccff00;
+      --purple: #d500f9;
+      --cyan: #00ffff;
+      --surface: #0a0a0a;
+    }
+    
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #fff;
+      font-family: "Outfit", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- FUTURISTIC UTILS --- */
+    .noise-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-high {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .hide-scroll::-webkit-scrollbar { display: none; }
+
+    /* --- ANIMATIONS --- */
+    .float-anim { animation: float 6s ease-in-out infinite; }
+    @keyframes float { 0%{transform:translateY(0)} 50%{transform:translateY(-15px)} 100%{transform:translateY(0)} }
+    
+    /* --- COMPONENTS --- */
+    .nav-dock {
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+
+    .btn-acid {
+      background: var(--lime);
+      color: #000;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      box-shadow: 0 10px 30px rgba(204,255,0,0.3);
+      transition: transform 0.2s;
+    }
+    .btn-acid:active { transform: scale(0.96); }
+
+    .scanner-frame {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      background: rgba(0,0,0,0.3);
+    }
+    .scanner-line {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: var(--lime);
+      box-shadow: 0 0 15px var(--lime);
+      animation: scan 2s linear infinite;
+    }
+    @keyframes scan{0%{top:5%}50%{top:95%}100%{top:5%}}
+
+    /* Story Gradient Ring */
+    .story-ring {
+        background: linear-gradient(45deg, #ccff00, #d500f9);
+        padding: 2px;
+        border-radius: 50%;
+    }
+    .story-ring.seen {
+        background: rgba(255,255,255,0.2);
+    }
+
+    /* Scroll Hide */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Reel Snapping */
+    .reel-container { scroll-snap-type: y mandatory; overflow-y: scroll; height: 100%; }
+    .reel-snap { scroll-snap-align: start; height: 100%; position: relative; }
+    
+    /* Payment Selection */
+    .pay-option { transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+    .pay-option.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+
+    /* --- FIXED PAYMENT MODAL CSS --- */
+    .razor-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .razor-modal {
+      width: 90%;
+      max-width: 400px;
+      background: #050505;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+  const { motion, AnimatePresence } = window.Motion;
+
+  /* ---------- AI KEYS ---------- */
+  const DEEPSEEK_CLIENT_KEY = "sk-2a0051fde2fd4f6d8e587abc872ee100";
+  const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions";
+
+  /* (Keeping Logic Intact) */
+  async function deepseekChat(prompt, opts = {}) {
+    const model = opts.model || "deepseek-chat";
+    const temperature = typeof opts.temperature === 'number' ? opts.temperature : 0.7;
+    const max_tokens = opts.max_tokens || 512;
+    try {
+      const proxyResp = await fetch("/api/deepseek/chat", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ model, prompt, temperature, max_tokens })
+      });
+      if(proxyResp.ok){
+        const json = await proxyResp.json();
+        if(typeof json.text === 'string') return json.text;
+        if(json?.choices?.[0]?.message?.content) return json.choices[0].message.content;
+        return JSON.stringify(json);
+      }
+    } catch(e){}
+    if(!DEEPSEEK_CLIENT_KEY) return "⚠️ DeepSeek key not configured.";
+    try {
+      const resp = await fetch(DEEPSEEK_ENDPOINT, {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${DEEPSEEK_CLIENT_KEY}`},
+        body: JSON.stringify({ model, messages:[{role:"user",content:prompt}], temperature, max_tokens })
+      });
+      const data = await resp.json();
+      if(data?.choices?.[0]?.message?.content) return data.choices[0].message.content;
+      return JSON.stringify(data);
+    } catch(err){ console.error("DeepSeek err", err); return "⚠️ DeepSeek request failed"; }
+  }
+
+  /* ---------- Seed Data ---------- */
+  const SEED_DATA = {
+    user:{ name: "Guest", karma: 420, streak: 3, level: 5, xp: 2400, maxXp: 5000 },
+    friends: [
+        { id:1, name: "Vibhuti", avatar: "🦁", charType: "Taco Titan", charImg: "🌮", level: 12, streak: 45, xp: 80, maxXp: 100, lastMsg: "Yo, chai time?", msgTime: "2m", hasStory: true, storyImg: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=800&q=80", storyText: "Burger Singh is GOAT 🐐" },
+        { id:2, name: "Miraj", avatar: "😎", charType: "Burger Boss", charImg: "🍔", level: 5, streak: 12, xp: 20, maxXp: 100, lastMsg: "Sent a gift 🎁", msgTime: "1h", hasStory: true, storyImg: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&q=80", storyText: "Tapri Chai hits diff in rain ☔" },
+        { id:3, name: "Helly", avatar: "🧢", charType: "Fries Fiend", charImg: "🍟", level: 2, streak: 3, xp: 10, maxXp: 50, lastMsg: "Did you order?", msgTime: "3h", hasStory: false },
+        { id:4, name: "Kriti", avatar: "🌸", charType: "Pizza Pro", charImg: "🍕", level: 24, streak: 102, xp: 95, maxXp: 100, lastMsg: "Lmao true", msgTime: "1d", hasStory: true, storyImg: "https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?w=800&q=80", storyText: "Momos again? Yes. 🥟" },
+        { id:5, name: "Akhilesh", avatar: "⚡", charType: "Shake Sultan", charImg: "🥤", level: 8, streak: 15, xp: 40, maxXp: 100, lastMsg: "Gym ke baad?", msgTime: "5m", hasStory: true, storyImg: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&q=80", storyText: "Protein shake needed ASAP 💪" }
+    ],
+    vendors:[
+      { id:1, name:"Tapri Central", rating:4.9, wait:5, img:"☕", vibe:"Chill", tags:["Tea","Snacks"] },
+      { id:2, name:"Momo King", rating:4.7, wait:12, img:"🥟", vibe:"Spicy", tags:["Street","Tibetan"] },
+      { id:3, name:"Burger Singh", rating:4.5, wait:20, img:"🍔", vibe:"Loud", tags:["Fast Food"] },
+      { id:4, name:"Dosa Plaza", rating:4.8, wait:8, img:"🥘", vibe:"Family", tags:["South Indian"] }
+    ],
+    menu:[
+      { id:101, vid:1, name:"Masala Chai", price:20, tags:["Bestseller"], type:"veg", desc:"Ginger cardamom blast" },
+      { id:102, vid:1, name:"Bun Maska", price:40, tags:["Classic"], type:"veg", desc:"Fresh bun with Amul butter" },
+      { id:201, vid:2, name:"Chicken Steam", price:120, tags:["Spicy"], type:"non-veg", desc:"8 pcs with red chutney" },
+      { id:202, vid:2, name:"Veg Fried Momos", price:100, tags:["Crunchy"], type:"veg", desc:"Crispy delight" },
+      { id:301, vid:3, name:"Aloo Tikki Burger", price:80, tags:["Filling"], type:"veg", desc:"Indian style patty" },
+      { id:302, vid:3, name:"Crispy Chicken", price:150, tags:["Juicy"], type:"non-veg", desc:"Double patty madness" },
+      { id:401, vid:4, name:"Masala Dosa", price:90, tags:["Crispy"], type:"veg", desc:"Served with sambar" }
+    ],
+    orders:[],
+    feed:[
+      { id:1, text:"Vibhuti gifted Chai ☕ to Miraj", time:"2m ago", type:"gift" },
+      { id:2, text:"Akhilesh hit a 15-Day Streak! 🔥", time:"10m ago", type:"streak" },
+      { id:3, text:"Helly just ordered 12 Momos 🥟", time:"15m ago", type:"order" }
+    ],
+    chatHistory:[{role:'ai',text:'👨‍🍳 VendorGPT: System Online.'}],
+    reels: [
+        { id: 1, vid: 3, user: "Miraj_Eats", avatar: "😎", caption: "This burger is literally insane 🍔🔥 #CampusEats", likes: 1204, comments: 45, song: "Trending - LoFi Beats", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+        { id: 2, vid: 1, user: "Kriti_Pizza", avatar: "🌸", caption: "Rainy day + Tapri Chai = ❤️☔", likes: 890, comments: 22, song: "Original Audio - Simran", img: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+        { id: 3, vid: 2, user: "Vibhuti_Tacos", avatar: "🦁", caption: "Wait time is only 5 mins today! Run! 🏃‍♂️", likes: 3402, comments: 112, song: "Speed Up - K-Pop", img: "https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+        { id: 4, vid: 4, user: "Akhilesh_Lift", avatar: "⚡", caption: "Crispy perfection after workout. 🤤", likes: 560, comments: 12, song: "South Vibe - Bass Boosted", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" }
+    ]
+  };
+
+  /* ---------- Storage Hook ---------- */
+  function useStickyState(defaultValue, key){
+    const [value, setValue] = useState(()=> {
+      try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : defaultValue; } catch(e){ return defaultValue; }
+    });
+    useEffect(()=> { try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){} }, [key, value]);
+    return [value, setValue];
+  }
+
+  /* ---------- Utils & Routing ---------- */
+  function parseHash(h){
+    if(!h) return {base:'landing', params:{}};
+    const cleaned = h.replace(/^#/,'');
+    const parts = cleaned.split('/').filter(Boolean);
+    if(parts.length===0) return {base:'home', params:{}};
+    const base = parts[0]; const params = {};
+    if(base==='vendor' && parts[1]) params.vendorId = Number(parts[1]);
+    if(base==='orders' && parts[1]) params.orderId = parts[1];
+    if(base==='vendor-os') params.sub = parts[1] || 'kds';
+    return {base, params};
+  }
+  function goHash(route){ if(!route.startsWith('/')) route = '/' + route; location.hash = route; }
+  function formatCurrency(n){ return `₹${n}`; }
+  function copyToClipboard(text){ navigator.clipboard?.writeText(text).then(()=>alert("Link copied to clipboard")); }
+  function secondsToMMSS(sec){
+    const m = Math.floor(sec/60); const s = sec%60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  /* ---------- AI ETA ---------- */
+  async function estimateCookingMinutes(orderItems, vendorWait = 10){
+    try {
+      const itemNames = orderItems.map(i => i.name).join(', ');
+      const prompt = `You are a fast-food kitchen assistant. Estimate a realistic cooking/prep time in minutes for this order: ${itemNames}. Return only a single integer number (minutes). If multiple items, combine time.`;
+      const resp = await deepseekChat(prompt, { temperature: 0.25, max_tokens: 40 });
+      const numMatch = String(resp).match(/(\d{1,3})/);
+      if(numMatch){
+        const minutes = parseInt(numMatch[1], 10);
+        if(!isNaN(minutes) && minutes > 0 && minutes < 24*60) return minutes;
+      }
+    } catch(e){ console.error("ETA AI failed", e); }
+    return Math.max(1, Math.round(vendorWait || 10));
+  }
+
+  /* ---------- MAIN APP ---------- */
+  function App(){
+    const [db, setDb] = useStickyState(SEED_DATA, 'snackchat_db_v48');
+    const [cart, setCart] = useStickyState([], 'snackchat_cart_v48');
+    const [aiBusy, setAiBusy] = useState(false);
+    const [view, setView] = useState('landing'); 
+    const [nav, setNav] = useState('home'); 
+    const [vendorOsTab, setVendorOsTab] = useState('kds');
+    const [activeVendor, setActiveVendor] = useState(null);
+    const [paymentModal, setPaymentModal] = useState(null);
+    const [foundersVisible, setFoundersVisible] = useState(true);
+    const timerRef = useRef(null);
+
+    useEffect(()=> {
+      function applyHash(){
+        const h = parseHash(location.hash);
+        if(h.base==='landing' || h.base==='') { setView('landing'); setNav('home'); setActiveVendor(null); }
+        else if(h.base==='home'){ setView('customer'); setNav('home'); setActiveVendor(null); }
+        else if(h.base==='vendor'){ setView('customer'); setNav('home'); setActiveVendor(db.vendors.find(v=>v.id===h.params.vendorId)||null); }
+        else if(h.base==='streaks'){ setView('customer'); setNav('streaks'); setActiveVendor(null); } 
+        else if(h.base==='qr'){ setView('customer'); setNav('qr'); setActiveVendor(null); }
+        else if(h.base==='vibes'){ setView('customer'); setNav('vibes'); setActiveVendor(null); }
+        else if(h.base==='profile'){ setView('customer'); setNav('profile'); setActiveVendor(null); }
+        else if(h.base==='orders'){ setView('customer'); setNav('profile'); setActiveVendor(null); }
+        else if(h.base==='vendor-os'){ setView('vendor'); setVendorOsTab(h.params.sub || 'kds'); }
+        else { setView('landing'); setNav('home'); setActiveVendor(null); }
+      }
+      applyHash();
+      window.addEventListener('hashchange', applyHash);
+      return ()=> window.removeEventListener('hashchange', applyHash);
+    }, [db.vendors]);
+
+    useEffect(()=> {
+      function tick(){
+        const now = Date.now();
+        let changed=false;
+        const newOrders = db.orders.map(o=>{
+          if(o.status === 'pending' && o.readyAt && now >= o.readyAt){
+            changed = true; return {...o, status:'ready'};
+          }
+          return o;
+        });
+        if(changed){
+          setDb(prev => ({ ...prev, orders: newOrders, feed:[{id:Date.now(), text: "An order is ready for pickup!", time:"Just now", type:"streak"}, ...prev.feed] }));
+          const parts = location.hash.replace(/^#/,'').split('/').filter(Boolean);
+          if(parts[0]==='orders' && parts[1]){
+            const orderId = parts[1];
+            const or = newOrders.find(o=>o.id===orderId);
+            if(or && or.status==='ready') alert("Your order is ready for pickup!");
+          }
+        }
+      }
+      timerRef.current = setInterval(tick, 1000);
+      return ()=> clearInterval(timerRef.current);
+    }, [db.orders]);
+
+    function addToCart(item){ setCart(prev=> [...prev, {...item, cartId: Date.now()} ]); alert(`${item.name} added to cart`); }
+    function removeFromCart(cartId){ setCart(prev => prev.filter(i=>i.cartId !== cartId)); }
+    function cartTotal(){ return cart.reduce((s,i)=>s+i.price,0); }
+
+    async function openCheckout(){
+      if(cart.length === 0){ alert("Cart is empty"); return; }
+      const draft = { id:`DRAFT-${Date.now()}`, items: cart, total: cartTotal(), customer: db.user.name, vendorId: cart[0]?.vid || null };
+      
+      setPaymentModal({ 
+        amount: draft.total, 
+        orderDraft: draft, 
+        onSuccess: async (paymentInfo) => {
+          setAiBusy(true);
+          let vendorWait = 10;
+          if(draft.vendorId){ const v = db.vendors.find(x=>x.id===draft.vendorId); if(v && v.wait) vendorWait = v.wait; }
+          
+          let minutes = 10;
+          // Fallback ETA logic to prevent freezing if AI hangs
+          try {
+             minutes = await estimateCookingMinutes(draft.items, vendorWait);
+          } catch(e){ minutes = vendorWait; }
+          
+          if(!minutes || isNaN(minutes) || minutes < 1) minutes = Math.max(1, vendorWait || 10);
+          if(minutes > 180) minutes = 180;
+          
+          const readyAt = Date.now() + minutes * 60 * 1000;
+          const newOrder = {
+            id: `ORD-${Math.floor(Math.random()*900000)}`,
+            customer: draft.customer,
+            items: draft.items,
+            total: draft.total,
+            status: 'pending',
+            time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            timestamp: Date.now(),
+            payment: paymentInfo,
+            readyAt,
+            etaMinutes: minutes
+          };
+          
+          // Update DB with specific payment method details in feed
+          const paymentMethodName = paymentInfo.methodName || "Payment";
+          setDb(prev => ({ ...prev, orders: [newOrder, ...prev.orders], user: {...prev.user, karma: prev.user.karma + 15, xp: prev.user.xp + Math.floor(draft.total/5) }, feed: [{id:Date.now(), text: `${prev.user.name} placed order via ${paymentMethodName}`, time:"Just now", type:'order'}, ...prev.feed] }));
+          setCart([]);
+          setAiBusy(false);
+          
+          // FORCE NAVIGATION
+          goHash(`/orders/${newOrder.id}`);
+        }
+      });
+    }
+    
+    function updateOrderStatus(orderId, newStatus){ setDb(prev => ({ ...prev, orders: prev.orders.map(o=> o.id===orderId ? {...o, status:newStatus} : o) })); }
+    function shareCurrent(){ copyToClipboard(location.href); }
+
+    return (
+      <div className="h-screen w-full bg-[#000] relative selection:bg-[#ccff00] selection:text-black font-sans text-white overflow-hidden">
+        {/* BACKGROUND FX */}
+        <div className="noise-bg"></div>
+        <div className="absolute top-[-25%] left-[-25%] w-[600px] h-[600px] bg-[#ccff00]/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-[#d500f9]/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen" style={{animationDelay:'2s'}}></div>
+
+        <AnimatePresence mode="wait">
+          {view==='landing' && <Landing onOpenCustomer={()=>goHash('/home')} onOpenVendor={()=>goHash('/vendor-os/kds')} />}
+          {view==='customer' && <Customer db={db} setDb={setDb} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart} openCheckout={openCheckout} setAiBusy={setAiBusy} nav={nav} setNav={(n)=>goHash('/'+n)} activeVendor={activeVendor} openVendorById={(id)=>goHash('/vendor/'+id)} shareCurrent={shareCurrent} />}
+          {view==='vendor' && <VendorOS db={db} setDb={setDb} vendorOsTab={vendorOsTab} setVendorOsTab={(t)=>goHash('/vendor-os/'+t)} updateOrderStatus={updateOrderStatus} resetData={() => { if(confirm('Reset app data?')){ localStorage.removeItem('snackchat_db_v48'); localStorage.removeItem('snackchat_cart_v48'); location.reload(); } }} setAiBusy={setAiBusy} />}
+        </AnimatePresence>
+
+        <div className="absolute bottom-6 right-6 z-50 pointer-events-none">
+          <div className="glass px-3 py-1.5 rounded-full text-[10px] uppercase font-mono tracking-widest text-[#ccff00] border border-[#ccff00]/20">
+            {aiBusy ? "AI PROCESSING..." : "SYSTEM READY"}
+          </div>
+        </div>
+
+        {foundersVisible && view === 'landing' && (
+          <div className="founders-fixed">
+            <div className="founders-pill">
+              <div className="text-[10px] font-bold text-gray-300 tracking-wider">
+                CRAFTED BY <span className="text-white">KULDEEP</span> & <span className="text-white">SUPRIYA</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <AnimatePresence>
+          {paymentModal && <FakeRazorModal paymentModal={paymentModal} onClose={() => setPaymentModal(null)} />}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  /* ---------- LANDING ---------- */
+  function Landing({ onOpenCustomer, onOpenVendor }){
+    return (
+      <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="h-full flex flex-col items-center justify-center p-6 text-center z-20 relative">
+        <div className="mb-8 relative float-anim">
+          <div className="relative glass w-32 h-32 rounded-[32px] border border-[#ccff00]/30 shadow-[0_0_80px_rgba(204,255,0,0.2)] flex items-center justify-center bg-black/40">
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#ccff00]/20 to-transparent rounded-[32px]"></div>
+            <i className="fa-solid fa-burger text-5xl text-[#ccff00] drop-shadow-[0_0_15px_rgba(204,255,0,0.8)]"></i>
+          </div>
+        </div>
+        <h1 className="text-6xl font-black mb-2 tracking-tighter font-grotesk italic">Snackchat<span className="text-[#ccff00]">.</span></h1>
+        <p className="text-gray-400 text-xl mb-10 font-light">The <span className="text-white border-b border-[#ccff00]">Future</span> of Campus Craving.</p>
+
+        <div className="w-full max-w-xs space-y-4">
+          <button onClick={onOpenCustomer} className="btn-acid w-full py-5 rounded-2xl text-xl flex items-center justify-center gap-3 relative overflow-hidden group">
+            <span className="relative z-10 flex items-center gap-3"><i className="fa-solid fa-qrcode"></i> I'm Hungry</span>
+            <div className="absolute inset-0 bg-white/30 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+          </button>
+          <button onClick={onOpenVendor} className="w-full py-4 glass text-white rounded-2xl font-bold text-sm tracking-widest hover:bg-white/5 transition-all flex items-center justify-center gap-2 border border-white/10 uppercase">
+            <i className="fa-solid fa-store text-[#d500f9]"></i> Vendor Portal
+          </button>
+        </div>
+        <div className="absolute bottom-8 text-[10px] text-gray-600 font-mono uppercase tracking-[0.2em]">v4.8 Payment Logic</div>
+      </motion.div>
+    );
+  }
+
+  /* ---------- CUSTOMER VIEW ---------- */
+  function Customer({ db, setDb, cart, addToCart, removeFromCart, openCheckout, setAiBusy, nav, setNav, activeVendor, openVendorById, shareCurrent }){
+    const [filter, setFilter] = useState('all');
+    const [activeChat, setActiveChat] = useState(null);
+    const [sharedReel, setSharedReel] = useState(null);
+    const [activeStory, setActiveStory] = useState(null);
+
+    useEffect(()=> { setFilter('all'); if(nav !== 'vibes' && !activeChat) setSharedReel(null); }, [nav]);
+
+    // Enhanced open chat to handle reels
+    function openChat(friend, reel = null, storyContext = null) {
+        if(activeStory) setActiveStory(null);
+        setSharedReel(reel);
+        if(storyContext) {
+            setTimeout(() => {
+                // Logic handled inside ChatInterface via prop
+            }, 100);
+        }
+        setActiveChat({ ...friend, storyContext });
+    }
+
+    function getFilteredMenu(vid){
+      let items = db.menu.filter(i=>i.vid===vid);
+      if(filter !== 'all') items = items.filter(i=>i.type === filter);
+      return items;
+    }
+    async function handleGenerateMenuDesc(item){
+      setAiBusy(true);
+      const short = await deepseekChat(`Gen-Z 5-word menu description for "${item.name}". Emoji inclusive.`, { temperature:0.8, max_tokens:60 });
+      setDb(prev=> ({ ...prev, menu: prev.menu.map(m=> m.id===item.id ? {...m, desc: short} : m) }));
+      setAiBusy(false);
+    }
+
+    function boostStreak(e, friendId) {
+        e.stopPropagation();
+        setDb(prev => ({
+            ...prev,
+            friends: prev.friends.map(f => {
+                if(f.id !== friendId) return f;
+                return { ...f, streak: f.streak + 1, xp: f.xp + 10 };
+            })
+        }));
+        alert("Streak Boosted! 🔥");
+    }
+
+    return (
+      <motion.div initial={{y:20, opacity:0}} animate={{y:0, opacity:1}} exit={{y:-20, opacity:0}} className="h-full flex flex-col">
+        {!activeChat && nav !== 'vibes' && (
+        <div className="px-5 pt-8 pb-4 flex justify-between items-center glass-high sticky top-0 z-30">
+          <div className="flex items-center gap-3 active:scale-95 transition-transform cursor-pointer" onClick={()=>goHash('/home')}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ccff00] to-black border border-[#ccff00]/50 flex items-center justify-center font-black text-black italic text-xl">S</div>
+            <div>
+              <h2 className="font-bold text-lg leading-tight font-grotesk tracking-tight">Snackchat</h2>
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest">Manekchowk</p>
+            </div>
+          </div>
+          <div className="glass px-3 py-1.5 rounded-full flex items-center gap-2 border border-[#d500f9]/40 bg-[#d500f9]/10">
+            <i className="fa-solid fa-bolt text-[#d500f9] text-xs animate-pulse"></i>
+            <span className="font-bold font-mono text-sm">{db.user.xp} XP</span>
+          </div>
+        </div>
+        )}
+
+        {/* --- MAIN CONTENT AREA --- */}
+        <div className={`flex-1 overflow-y-auto no-scrollbar scroll-smooth ${nav==='vibes' ? 'pb-20' : 'pb-44'}`}>
+          {activeChat && <ChatInterface friend={activeChat} close={() => { setActiveChat(null); setSharedReel(null); }} initialReel={sharedReel} storyContext={activeChat.storyContext} />}
+          
+          {!activeChat && nav === 'home' && (
+            <>
+            {/* SQUAD STORIES RAIL */}
+            {!activeVendor && (
+            <div className="pt-2 pb-6 px-4 flex gap-4 overflow-x-auto no-scrollbar border-b border-white/5">
+                <div className="flex flex-col items-center gap-2 min-w-[72px]">
+                   <div className="w-[72px] h-[72px] rounded-full border border-white/10 flex items-center justify-center relative">
+                      <div className="w-[66px] h-[66px] bg-[#111] rounded-full flex items-center justify-center">
+                         <i className="fa-solid fa-plus text-gray-400"></i>
+                      </div>
+                      <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#ccff00] rounded-full border-4 border-black flex items-center justify-center text-black text-xs font-bold">+</div>
+                   </div>
+                   <span className="text-xs text-gray-400">My Story</span>
+                </div>
+                {db.friends.map(f => (
+                   <div key={f.id} onClick={() => f.hasStory && setActiveStory(f)} className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer active:scale-95 transition-transform">
+                      <div className={`w-[72px] h-[72px] rounded-full flex items-center justify-center p-[2px] ${f.hasStory ? 'story-ring' : 'border border-white/10'}`}>
+                         <div className="w-full h-full bg-[#111] rounded-full flex items-center justify-center text-2xl relative overflow-hidden border-2 border-black">
+                             {f.storyImg ? <img src={f.storyImg} className="w-full h-full object-cover" /> : f.charImg}
+                         </div>
+                      </div>
+                      <span className="text-xs text-white font-medium">{f.name}</span>
+                   </div>
+                ))}
+            </div>
+            )}
+
+            {activeVendor ? (
+              <VendorDetail activeVendor={activeVendor} getFilteredMenu={getFilteredMenu} addToCart={addToCart} handleGenerateMenuDesc={handleGenerateMenuDesc} setFilter={setFilter} filter={filter} />
+            ) : (
+              <div className="p-5 space-y-8">
+                <div className="glass p-5 rounded-3xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#d500f9]/20 blur-2xl rounded-full"></div>
+                  <div className="flex justify-between items-center mb-3 relative z-10">
+                    <h3 className="text-xs text-[#ccff00] uppercase tracking-widest font-bold">Campus Live</h3>
+                    <div className="w-2 h-2 bg-[#ccff00] rounded-full animate-ping"></div>
+                  </div>
+                  <div className="space-y-3 max-h-32 overflow-y-auto relative z-10">
+                    {db.feed.map(f=>(
+                      <div key={f.id} className="flex items-start gap-3 text-sm">
+                        <div className="min-w-[4px] h-[4px] rounded-full bg-[#d500f9] mt-2 box-shadow-[0_0_5px_#d500f9]"></div>
+                        <div>
+                          <div className="text-gray-200 text-xs font-medium">{f.text}</div>
+                          <div className="text-[10px] text-gray-500 font-mono">{f.time}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-3xl font-black mb-5 font-grotesk italic">Trending <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ccff00] to-[#00ff00]">Spots</span></h3>
+                  <div className="grid gap-5">
+                    {db.vendors.map(v=>(
+                      <a key={v.id} href={"#/vendor/"+v.id} className="route block group">
+                        <div className="glass p-4 rounded-[30px] flex gap-5 items-center transition-all duration-300 group-hover:bg-white/5 group-hover:border-[#ccff00]/30">
+                          <div className="w-20 h-20 bg-[#111] rounded-2xl flex items-center justify-center text-4xl shadow-inner group-hover:scale-105 transition-transform">{v.img}</div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <h3 className="font-bold text-xl font-grotesk">{v.name}</h3>
+                              <span className="text-[10px] bg-[#ccff00] text-black px-2 py-0.5 rounded font-black font-mono">{v.wait}m</span>
+                            </div>
+                            <p className="text-gray-400 text-xs mb-3 font-medium">{v.tags.join(' • ')}</p>
+                            <div className="flex gap-2 text-xs">
+                              <span className="bg-white/5 border border-white/5 px-2 py-1 rounded-md text-gray-300">⭐ {v.rating}</span>
+                              <span className="bg-white/5 border border-white/5 px-2 py-1 rounded-md text-gray-300">{v.vibe}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            </>
+          )}
+          
+          {!activeChat && nav === 'streaks' && <SquadGoals db={db} setDb={setDb} openChat={openChat} />}
+          {!activeChat && nav === 'qr' && <QRScanner db={db} setDb={setDb} />}
+          {!activeChat && nav === 'vibes' && <Vibes db={db} setDb={setDb} openChat={openChat} />}
+          {!activeChat && nav === 'profile' && <Profile db={db} setDb={setDb} />}
+        </div>
+
+        {/* --- DOCK NAVIGATION --- */}
+        {!activeChat && (
+        <div className="absolute bottom-6 w-full px-4 z-40 pointer-events-none flex justify-center">
+          <div className="nav-dock pointer-events-auto rounded-[32px] p-2 flex items-center gap-1 max-w-sm w-full relative">
+            
+            {/* Left Tabs */}
+            <div className="flex-1 flex justify-around items-center">
+                <NavIcon icon="fa-house" active={nav==='home'} onClick={()=>goHash('/home')} />
+                <NavIcon icon="fa-gamepad" active={nav==='streaks'} badge={db.user.streak} onClick={()=>goHash('/streaks')} />
+            </div>
+
+            {/* Central QR */}
+            <div className="relative -top-6 mx-2">
+                 <button onClick={()=>goHash('/qr')} className="w-16 h-16 bg-[#ccff00] rounded-[24px] rotate-45 flex items-center justify-center shadow-[0_0_30px_rgba(204,255,0,0.4)] hover:scale-105 transition-transform border-4 border-black">
+                    <i className="fa-solid fa-qrcode text-black text-2xl -rotate-45"></i>
+                 </button>
+            </div>
+
+            {/* Right Tabs */}
+            <div className="flex-1 flex justify-around items-center">
+                <NavIcon icon="fa-film" active={nav==='vibes'} onClick={()=>goHash('/vibes')} />
+                <NavIcon icon="fa-user" active={nav==='profile'} onClick={()=>goHash('/profile')} />
+            </div>
+
+            {/* Cart Overlay Indicator */}
+            {cart.length > 0 && nav !== 'vibes' && (
+                <div className="absolute -top-16 left-0 right-0 mx-auto w-[90%] glass-high p-3 rounded-2xl flex justify-between items-center animate-slideUp">
+                    <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded bg-[#ccff00] flex items-center justify-center font-bold text-black text-xs">{cart.length}</div>
+                         <div className="text-sm font-bold">{formatCurrency(cart.reduce((s,i)=>s+i.price,0))}</div>
+                    </div>
+                    <button onClick={openCheckout} className="bg-white text-black text-xs font-black px-4 py-2 rounded-lg">PAY &rarr;</button>
+                </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* --- STORY VIEWER OVERLAY --- */}
+        <AnimatePresence>
+            {activeStory && (
+                <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="fixed inset-0 z-[100] bg-black flex flex-col">
+                    {/* Story Content */}
+                    <div className="flex-1 relative">
+                        {/* Progress Bar */}
+                        <div className="absolute top-0 w-full p-2 flex gap-1 z-20">
+                            <div className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+                                <motion.div initial={{width:0}} animate={{width:'100%'}} transition={{duration:5, ease:'linear'}} className="h-full bg-white"></motion.div>
+                            </div>
+                        </div>
+                        
+                        {/* Header */}
+                        <div className="absolute top-4 left-0 w-full p-4 flex justify-between items-center z-20">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full border border-white/20 overflow-hidden">{activeStory.charImg}</div>
+                                <span className="font-bold text-sm shadow-black drop-shadow-md">{activeStory.name}</span>
+                                <span className="text-xs text-gray-300 opacity-80">{activeStory.msgTime}</span>
+                            </div>
+                            <button onClick={()=>setActiveStory(null)} className="w-8 h-8 flex items-center justify-center text-white"><i className="fa-solid fa-xmark text-xl"></i></button>
+                        </div>
+
+                        {/* Image */}
+                        <img src={activeStory.storyImg} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80"></div>
+                        
+                        {/* Caption */}
+                        <div className="absolute bottom-28 left-0 w-full p-6 text-center z-20">
+                             <div className="inline-block glass px-4 py-2 rounded-xl text-lg font-bold">{activeStory.storyText}</div>
+                        </div>
+                    </div>
+
+                    {/* Footer / Interaction */}
+                    <div className="p-4 flex gap-4 items-center bg-black pb-8">
+                        <div className="flex-1 relative">
+                           <input type="text" placeholder={`Reply to ${activeStory.name}...`} className="w-full glass rounded-full px-5 py-3 text-sm text-white border-white/20 focus:border-[#ccff00] outline-none" 
+                                  onKeyDown={(e)=>{
+                                      if(e.key==='Enter'){
+                                          openChat(activeStory, null, `Replied to story: "${activeStory.storyText}"`);
+                                      }
+                                  }}
+                           />
+                        </div>
+                        <button onClick={(e)=>boostStreak(e, activeStory.id)} className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center active:scale-90 transition-transform hover:bg-[#ccff00]/10">
+                            <i className="fa-solid fa-fire text-[#ccff00] text-xl"></i>
+                        </button>
+                        <button className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center active:scale-90 transition-transform">
+                            <i className="fa-solid fa-paper-plane text-white text-lg"></i>
+                        </button>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  }
+
+  /* ---------- VIBES (REELS) COMPONENT ---------- */
+  function Vibes({ db, setDb, openChat }) {
+    const [shareSheet, setShareSheet] = useState(null); // Which reel ID is being shared
+
+    const handleLike = (id) => {
+        setDb(prev => ({
+            ...prev, reels: prev.reels.map(r => r.id === id ? { ...r, likes: r.likes + 1, liked: !r.liked } : r)
+        }));
+    };
+
+    return (
+        <div className="reel-container h-full w-full bg-black">
+            {db.reels.map((reel) => (
+                <div key={reel.id} className="reel-snap w-full h-full relative flex items-end justify-start overflow-hidden border-b border-gray-900">
+                    <motion.div 
+                        initial={{ scale: 1 }}
+                        animate={{ scale: 1.1 }}
+                        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+                        className="absolute inset-0 z-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${reel.img})` }} 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-90"></div>
+                    
+                    {/* Right Action Bar */}
+                    <div className="absolute right-4 bottom-32 z-30 flex flex-col gap-6 items-center">
+                        <div className="relative group" onClick={() => handleLike(reel.id)}>
+                            <div className={`w-12 h-12 rounded-full glass flex items-center justify-center text-2xl transition-all active:scale-90 ${reel.liked ? 'text-red-500 bg-red-500/20 border-red-500' : 'text-white'}`}>
+                                <i className={`fa-${reel.liked ? 'solid' : 'regular'} fa-heart`}></i>
+                            </div>
+                            <span className="text-xs font-bold mt-1 shadow-black drop-shadow-md">{reel.likes}</span>
+                        </div>
+                        
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-full glass flex items-center justify-center text-2xl text-white active:scale-90">
+                                <i className="fa-regular fa-comment-dots"></i>
+                            </div>
+                            <span className="text-xs font-bold mt-1 shadow-black drop-shadow-md">{reel.comments}</span>
+                        </div>
+
+                        {/* SHARE BUTTON - Triggers Sheet */}
+                        <div onClick={() => setShareSheet(reel)} className="w-12 h-12 rounded-full glass flex items-center justify-center text-xl text-white active:scale-90 cursor-pointer">
+                           <i className="fa-solid fa-paper-plane"></i>
+                        </div>
+                    </div>
+
+                    {/* Content Overlay */}
+                    <div className="relative z-20 p-5 pb-28 w-full max-w-[80%]">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-full border border-[#ccff00] bg-black flex items-center justify-center text-xl">
+                                {reel.avatar}
+                            </div>
+                            <span className="font-bold text-shadow-md">{reel.user}</span>
+                            <button className="bg-transparent border border-white/30 text-[10px] px-2 py-1 rounded text-white font-bold backdrop-blur-sm">Follow</button>
+                        </div>
+                        
+                        <p className="text-sm text-gray-100 mb-3 leading-relaxed drop-shadow-md">
+                            {reel.caption}
+                        </p>
+
+                        <div className="flex items-center gap-2 text-xs font-mono text-gray-300 mb-4">
+                            <i className="fa-solid fa-music animate-pulse"></i>
+                            <div className="overflow-hidden w-40 whitespace-nowrap">
+                                <span className="animate-marquee inline-block">{reel.song} • {reel.song}</span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => {
+                                const vendor = db.vendors.find(v => v.id === reel.vid);
+                                if(vendor) {
+                                    alert(`Taking you to ${vendor.name}!`);
+                                    goHash(`/vendor/${vendor.id}`);
+                                }
+                            }}
+                            className="w-full glass flex items-center gap-3 p-3 rounded-xl border-l-4 border-[#ccff00] bg-[#ccff00]/10 hover:bg-[#ccff00]/20 transition-colors"
+                        >
+                            <div className="w-10 h-10 bg-[#ccff00] rounded-lg flex items-center justify-center text-black">
+                                <i className="fa-solid fa-bag-shopping"></i>
+                            </div>
+                            <div className="text-left">
+                                <div className="text-[10px] uppercase font-bold text-[#ccff00]">Crave it?</div>
+                                <div className="font-bold text-sm">Order from Vendor #{reel.vid}</div>
+                            </div>
+                            <i className="fa-solid fa-chevron-right ml-auto text-[#ccff00]"></i>
+                        </button>
+                    </div>
+                </div>
+            ))}
+
+            {/* SHARE SHEET MODAL */}
+            <AnimatePresence>
+                {shareSheet && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end"
+                        onClick={() => setShareSheet(null)}
+                    >
+                        <motion.div 
+                            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                            className="w-full bg-[#111] rounded-t-[32px] border-t border-white/10 p-6 pb-12"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="w-12 h-1 bg-gray-700 rounded-full mx-auto mb-6"></div>
+                            <h3 className="text-lg font-bold mb-4 font-grotesk">Send to...</h3>
+                            
+                            <div className="flex gap-4 overflow-x-auto no-scrollbar mb-4">
+                                <div className="flex flex-col items-center gap-2 min-w-[70px]">
+                                    <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-2xl border border-white/10"><i className="fa-solid fa-plus"></i></div>
+                                    <span className="text-xs text-gray-400">Story</span>
+                                </div>
+                                {db.friends.map(f => (
+                                    <div key={f.id} onClick={() => openChat(f, shareSheet)} className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer group">
+                                        <div className="w-14 h-14 rounded-full bg-black border border-white/20 flex items-center justify-center text-2xl relative group-active:scale-90 transition-transform">
+                                            {f.charImg}
+                                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#ccff00] rounded-full border-2 border-black"></div>
+                                        </div>
+                                        <span className="text-xs text-gray-400">{f.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl">
+                                <div className="w-10 h-10 bg-gray-800 rounded-md bg-cover bg-center" style={{backgroundImage: `url(${shareSheet.img})`}}></div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-bold truncate">{shareSheet.caption}</div>
+                                </div>
+                                <button className="text-xs font-bold text-[#ccff00]">Link</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+  }
+
+  /* ---------- SQUAD GOALS (Gamified) ---------- */
+  function SquadGoals({ db, setDb, openChat }) {
+    const feedStreak = (e, friendId) => {
+        e.stopPropagation();
+        setDb(prev => ({
+            ...prev,
+            friends: prev.friends ? prev.friends.map(f => {
+                if(f.id !== friendId) return f;
+                let newXp = f.xp + 20;
+                let newLvl = f.level;
+                if(newXp >= f.maxXp) { newXp = 0; newLvl += 1; alert(`${f.name}'s ${f.charType} Leveled Up! 🎉`); }
+                return { ...f, xp: newXp, level: newLvl, streak: f.streak + 1 };
+            }) : []
+        }));
+    };
+
+    return (
+        <motion.div initial={{x:20, opacity:0}} animate={{x:0, opacity:1}} exit={{x:-20, opacity:0}} className="p-5">
+            <div className="mb-8 text-center relative">
+                <h2 className="text-5xl font-black italic font-grotesk tracking-tighter">SQUAD <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ccff00] to-[#00ff00]">GOALS</span></h2>
+                <div className="text-xs font-mono text-gray-500 uppercase tracking-widest mt-1">Keep the flame alive</div>
+            </div>
+
+            <div className="grid gap-6">
+                {(db.friends || []).map(f => (
+                    <div key={f.id} onClick={()=>openChat(f)} className="char-card rounded-[32px] p-5 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-[#ccff00]/5 rounded-full blur-[50px] group-active:bg-[#ccff00]/15 transition-colors"></div>
+                        
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className="relative">
+                                <div className="w-20 h-20 bg-[#0a0a0a] rounded-full border-2 border-[#ccff00] flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(204,255,0,0.15)] z-20 relative">
+                                    {f.charImg}
+                                </div>
+                                <div className="absolute -bottom-2 -right-0 bg-black text-[#ccff00] border border-[#ccff00]/30 px-2 py-0.5 rounded-md text-[10px] font-black font-mono z-30">
+                                    LVL {f.level}
+                                </div>
+                            </div>
+
+                            <div className="flex-1">
+                                <div className="flex justify-between items-start mb-1">
+                                    <div>
+                                        <h3 className="font-bold text-xl leading-none font-grotesk">{f.name}</h3>
+                                        <div className="text-[10px] text-[#ccff00] font-mono uppercase tracking-wider opacity-80 mt-1">{f.charType}</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl font-black italic text-white drop-shadow-md">🔥 {f.streak}</div>
+                                    </div>
+                                </div>
+
+                                {/* Neon Progress Bar */}
+                                <div className="w-full h-3 bg-[#111] rounded-full overflow-hidden mt-3 border border-white/5 relative">
+                                    <motion.div initial={{width: 0}} animate={{width: `${(f.xp / f.maxXp) * 100}%`}} className="h-full bg-[#ccff00] shadow-[0_0_10px_#ccff00]" />
+                                </div>
+                                <div className="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
+                                    <span>XP: {f.xp}/{f.maxXp}</span>
+                                    <span>{f.lastMsg}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-white/5">
+                            <button onClick={(e)=>feedStreak(e, f.id)} className="py-3 bg-[#ccff00]/10 border border-[#ccff00]/20 rounded-xl text-xs font-bold text-[#ccff00] hover:bg-[#ccff00] hover:text-black transition-all">
+                                <i className="fa-solid fa-fire mr-2"></i>FEED
+                            </button>
+                            <button className="py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/20 transition-all">
+                                CHAT
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+    );
+  }
+
+  /* ---------- VENDOR DETAIL ---------- */
+  function VendorDetail({ activeVendor, getFilteredMenu, addToCart, handleGenerateMenuDesc, setFilter, filter }){
+    const items = getFilteredMenu(activeVendor.id);
+    return (
+      <div className="min-h-full">
+        <div className="h-56 relative flex items-end p-5 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://source.unsplash.com/random/800x600/?neon,cyberpunk')] bg-cover bg-center opacity-60"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#000] via-[#000]/60 to-transparent"></div>
+          
+          <a href="#/home" className="absolute top-6 left-6 w-10 h-10 rounded-full glass flex items-center justify-center text-white hover:bg-white/20 transition-colors z-20"><i className="fa-solid fa-arrow-left"></i></a>
+          
+          <div className="w-full relative z-10">
+            <h1 className="text-5xl font-black mb-2 font-grotesk tracking-tighter italic text-white">{activeVendor.name}</h1>
+            <div className="flex gap-3 text-xs font-bold">
+              <span className="bg-[#ccff00] text-black px-3 py-1 rounded-md">OPEN</span>
+              <span className="glass px-3 py-1 rounded-md">⭐ {activeVendor.rating}</span>
+              <span className="glass px-3 py-1 rounded-md">🕒 {activeVendor.wait} mins</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky top-0 bg-[#000]/80 backdrop-blur-md p-4 z-20 border-b border-white/5">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar">
+            {['all','veg','non-veg'].map(f=>(
+              <button key={f} onClick={()=>setFilter(f)} className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${filter===f ? 'bg-white text-black' : 'glass text-gray-400'}`}>{f}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {items.map(item=>(
+            <div key={item.id} className="glass p-4 rounded-2xl flex justify-between items-center group hover:border-[#ccff00]/30 transition-colors">
+              <div className="flex-1 pr-4">
+                <div className="flex items-center gap-2 mb-1"><h3 className="font-bold text-lg">{item.name}</h3> <span className={`w-2 h-2 rounded-full ${item.type==='veg'?'bg-green-500':'bg-red-500'}`}></span></div>
+                <p className="text-gray-400 text-xs line-clamp-2 leading-relaxed">{item.desc}</p>
+                <div className="font-mono font-bold mt-2 text-[#ccff00]">{formatCurrency(item.price)}</div>
+              </div>
+              <div className="flex flex-col gap-3">
+                 <button className="w-12 h-12 bg-white text-black rounded-xl flex items-center justify-center text-lg hover:scale-105 active:scale-95 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]" onClick={()=>addToCart(item)}><i className="fa-solid fa-plus"></i></button>
+                 <button className="w-12 h-8 glass rounded-xl flex items-center justify-center text-[10px]" onClick={()=>handleGenerateMenuDesc(item)}>AI ✨</button>
+              </div>
+            </div>
+          ))}
+          {items.length===0 && <div className="text-center py-10 text-gray-600 font-mono">NO ITEMS_FOUND</div>}
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------- CHAT ---------- */
+  function ChatInterface({ friend, close, initialReel, storyContext }) {
+      const [msgs, setMsgs] = useState([
+          {role:'them', text: friend.lastMsg}, 
+          {role:'me', text: 'Bet, ordering now.'}
+      ]);
+      const [input, setInput] = useState('');
+
+      // Inject the shared reel if it exists
+      useEffect(() => {
+          if (initialReel) {
+              setMsgs(prev => [...prev, { role: 'me', type: 'reel', content: initialReel }]);
+              setTimeout(() => {
+                  setMsgs(prev => [...prev, { role: 'them', text: "Yooo that looks so good! 🤤" }]);
+              }, 1500);
+          }
+      }, [initialReel]);
+
+      // Inject story reply context
+      useEffect(() => {
+          if (storyContext) {
+             setMsgs(prev => [...prev, { role: 'me', text: storyContext, isContext: true }]);
+             setTimeout(() => {
+                  setMsgs(prev => [...prev, { role: 'them', text: "Haha yesss it was amazing!" }]);
+             }, 1000);
+          }
+      }, [storyContext]);
+
+      const send = (e) => { e.preventDefault(); if(!input) return; setMsgs([...msgs, {role:'me', text: input}]); setInput(''); setTimeout(()=> setMsgs(p => [...p, {role:'them', text: "No cap that sounds good 🔥"}]), 1000); }
+
+      return (
+          <motion.div initial={{y:50, opacity:0}} animate={{y:0, opacity:1}} exit={{y:50, opacity:0}} className="h-full flex flex-col bg-black z-50 fixed inset-0">
+              <div className="p-5 pt-8 bg-black/80 backdrop-blur-md border-b border-white/10 flex items-center gap-4">
+                  <button onClick={close} className="w-10 h-10 glass rounded-full flex items-center justify-center"><i className="fa-solid fa-chevron-left"></i></button>
+                  <div className="w-10 h-10 bg-gray-900 rounded-full border border-white/10 flex items-center justify-center text-xl">{friend.charImg}</div>
+                  <div><div className="font-bold">{friend.name}</div><div className="text-[10px] text-[#ccff00] font-mono">Level {friend.level} • Online</div></div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                  {msgs.map((m,i) => (
+                      <div key={i} className={`flex ${m.role==='me'?'justify-end':'justify-start'}`}>
+                          {m.type === 'reel' ? (
+                            /* --- REEL MESSAGE CARD --- */
+                            <div className="w-64 bg-[#111] border border-white/10 rounded-2xl overflow-hidden rounded-br-none">
+                                <div className="h-40 bg-cover bg-center" style={{backgroundImage: `url(${m.content.img})`}}>
+                                    <div className="w-full h-full bg-black/20 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"><i className="fa-solid fa-play text-white"></i></div>
+                                    </div>
+                                </div>
+                                <div className="p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-6 h-6 rounded-full bg-gray-800 text-xs flex items-center justify-center">{m.content.avatar}</div>
+                                        <span className="text-xs font-bold">{m.content.user}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-400 line-clamp-2 mb-2">{m.content.caption}</div>
+                                    <button className="w-full py-2 bg-[#ccff00]/10 text-[#ccff00] text-xs font-bold rounded">WATCH REEL</button>
+                                </div>
+                            </div>
+                          ) : (
+                            /* --- TEXT MESSAGE --- */
+                            <div className={`max-w-[75%] p-4 rounded-2xl text-sm font-medium ${m.role==='me' ? 'bg-[#ccff00] text-black rounded-br-none shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'glass rounded-bl-none border-white/10'} ${m.isContext ? 'italic opacity-80' : ''}`}>
+                                {m.text}
+                            </div>
+                          )}
+                      </div>
+                  ))}
+              </div>
+              <form onSubmit={send} className="p-4 bg-black border-t border-white/10 flex gap-3 pb-8">
+                  <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Send message..." className="flex-1 bg-[#111] border border-white/10 rounded-full px-5 py-3 text-sm focus:border-[#ccff00] outline-none transition-colors text-white" />
+                  <button type="submit" className="w-12 h-12 bg-[#ccff00] text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform"><i className="fa-solid fa-paper-plane"></i></button>
+              </form>
+          </motion.div>
+      )
+  }
+
+  /* ---------- UTILS: QR, Profile (Styled) ---------- */
+  function QRScanner({ db, setDb }){
+    return (
+      <div className="p-6 flex flex-col items-center gap-8 h-full justify-center">
+        <h3 className="font-bold text-2xl font-grotesk">SCAN <span className="text-[#ccff00]">TARGET</span></h3>
+        <div className="scanner-frame w-64 h-64 flex items-center justify-center glass">
+           <i className="fa-solid fa-qrcode text-6xl opacity-20"></i>
+           <div className="scanner-line"></div>
+        </div>
+        <div className="flex gap-3 w-full">
+          <button className="glass flex-1 py-4 rounded-xl font-bold hover:bg-white/10" onClick={()=>{ const vendor = db.vendors[1]; if(vendor){ alert(`Scanned: ${vendor.name}`); goHash(`/vendor/${vendor.id}`); } }}>Vendor</button>
+          <button className="btn-acid flex-1 py-4 rounded-xl font-bold" onClick={()=>{ setDb(prev=>({...prev, feed:[{id:Date.now(), text:"Unlocked ₹20 off!", time:"Just now", type:"promo"}, ...prev.feed]})); alert("Deal unlocked"); }}>Unlock Deal</button>
+        </div>
+      </div>
+    );
+  }
+
+  function Profile({ db, setDb }){
+    /* (Logic identical to previous, just styled) */
+    const parts = location.hash.replace(/^#/,'').split('/').filter(Boolean);
+    const maybeOrderId = (parts[0]==='orders' && parts[1]) ? parts[1] : null;
+    const order = maybeOrderId ? db.orders.find(o=>o.id===maybeOrderId) : null;
+    function pickUpNow(o){
+      setDb(prev => ({ ...prev, orders: prev.orders.map(ord => ord.id===o.id ? {...ord, status:'completed'} : ord), feed: [{id:Date.now(), text:`${prev.user.name} picked up ${o.id}`, time:'Just now', type:'order'}, ...prev.feed] }));
+      alert("Enjoy your meal! Order marked completed.");
+    }
+    return (
+      <div className="p-5 space-y-5 pb-32"> 
+        <div className="glass p-5 rounded-[30px] flex items-center gap-5 border border-white/10">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#ccff00] to-black p-1">
+             <div className="w-full h-full bg-black rounded-full flex items-center justify-center text-3xl font-black">{db.user.name[0]}</div>
+          </div>
+          <div><div className="font-bold text-2xl font-grotesk">{db.user.name}</div><div className="text-sm text-[#ccff00] font-mono">{db.user.karma} Karma Points</div></div>
+        </div>
+
+        {!order && <div className="glass p-5 rounded-[30px]">
+          <div className="flex justify-between mb-4"><div className="text-sm text-gray-400 font-mono uppercase tracking-widest">Order History</div><div className="font-bold">{db.orders.length}</div></div>
+          <div className="space-y-3">
+            {db.orders.slice(0,6).map(o=>(
+              <a key={o.id} className="route block" href={"#/orders/"+o.id}>
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex justify-between items-center hover:bg-white/10 transition-colors">
+                  <div>
+                    <div className="font-mono text-[10px] text-[#ccff00]">#{o.id.slice(-4)}</div>
+                    <div className="font-bold text-sm">{o.items.map(it=>it.name).join(", ")}</div>
+                    <div className="text-[10px] text-gray-400 mt-1 uppercase">{o.status}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{formatCurrency(o.total)}</div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>}
+
+        {order && <div className="glass p-6 rounded-[30px] border border-[#ccff00]/30 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-[#ccff00] animate-pulse"></div>
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <div className="font-mono text-xs text-gray-400">ORDER ID</div>
+              <div className="font-black text-2xl text-white tracking-widest">{order.id.slice(-6)}</div>
+            </div>
+            <div className="text-right">
+              <div className="font-black text-2xl text-[#ccff00]">{formatCurrency(order.total)}</div>
+              <div className="text-xs bg-white/10 px-2 py-1 rounded text-white inline-block mt-1">{order.status}</div>
+            </div>
+          </div>
+          <div className="space-y-2 mb-6 border-t border-b border-white/10 py-4">
+            {order.items.map((it,idx)=>(<div key={idx} className="flex justify-between text-sm"><div>{it.name}</div><div className="text-gray-400 font-mono">{formatCurrency(it.price)}</div></div>))}
+          </div>
+          {order.status === 'pending' && order.readyAt && (
+             <div className="text-center mb-4">
+                <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Estimated Pickup</div>
+                <div className="text-4xl font-black font-grotesk animate-pulse">{secondsToMMSS(Math.max(0, Math.floor((order.readyAt - Date.now())/1000)))}</div>
+             </div>
+          )}
+          {order.status === 'ready' && <button className="btn-acid w-full py-4 rounded-xl text-lg" onClick={()=>pickUpNow(order)}>PICK UP NOW</button>}
+          <button className="w-full py-3 text-xs text-gray-400 hover:text-white mt-2" onClick={()=>goHash('/profile')}>CLOSE TICKET</button>
+        </div>}
+
+        <button className="w-full py-4 border border-red-500/30 text-red-500 rounded-xl font-bold hover:bg-red-500/10 transition-colors" onClick={()=>{ if(confirm("Reset?")){ localStorage.removeItem('snackchat_db_v47_1'); localStorage.removeItem('snackchat_cart_v47_1'); location.reload(); } }}>SYSTEM RESET</button>
+      </div>
+    );
+  }
+
+  /* ---------- VENDOR OS ---------- */
+  function VendorOS({ db, setDb, vendorOsTab, setVendorOsTab, updateOrderStatus, resetData, setAiBusy }){
+    /* (Logic kept mostly same, styled darker) */
+    const [tab, setTab] = useState(vendorOsTab || 'kds');
+    const [gptInput, setGptInput] = useState('');
+    useEffect(()=> setTab(vendorOsTab || 'kds'), [vendorOsTab]);
+
+    return (
+      <div className="h-full flex flex-col bg-[#050505] text-white font-mono">
+        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-[#000]">
+          <div><h2 className="font-bold text-xl">VENDOR<span className="text-[#ccff00]">.OS</span></h2><div className="text-[10px] text-gray-500">KDS TERMINAL</div></div>
+          <a href="#/" className="text-xs border border-white/20 px-3 py-1 rounded hover:bg-white/10">EXIT</a>
+        </div>
+        <div className="flex p-2 gap-2 bg-[#111]">
+          <button className={`flex-1 py-3 text-xs font-bold ${tab==='kds'?'bg-white text-black':'bg-[#222] text-gray-400'}`} onClick={()=>{setTab('kds');setVendorOsTab('kds')}}>KDS LIVE</button>
+          <button className={`flex-1 py-3 text-xs font-bold ${tab==='chat'?'bg-[#ccff00] text-black':'bg-[#222] text-gray-400'}`} onClick={()=>{setTab('chat');setVendorOsTab('chat')}}>AI ASSIST</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {tab==='kds' ? (
+             <div className="space-y-4">
+               {db.orders.map(o=>(
+                 <div key={o.id} className={`p-4 border ${o.status==='pending'?'border-[#ccff00] bg-[#ccff00]/5':'border-white/10 bg-[#111]'}`}>
+                    <div className="flex justify-between mb-2"><span className="font-bold">#{o.id.slice(-4)}</span> <span className="text-xs">{o.status}</span></div>
+                    {o.items.map((i,idx)=><div key={idx} className="text-sm">{i.name}</div>)}
+                    <div className="flex gap-2 mt-3">
+                       {o.status==='pending' && <button className="bg-[#ccff00] text-black px-4 py-2 text-xs font-bold" onClick={()=>updateOrderStatus(o.id,'cooking')}>START</button>}
+                       {o.status==='cooking' && <button className="bg-white text-black px-4 py-2 text-xs font-bold" onClick={()=>updateOrderStatus(o.id,'ready')}>READY</button>}
+                    </div>
+                 </div>
+               ))}
+             </div>
+          ) : (
+             <div className="h-full flex flex-col">
+               <div className="flex-1 space-y-4">{db.chatHistory.map((m,i)=><div key={i} className={`p-3 text-sm ${m.role==='ai'?'bg-[#222] text-gray-300':'bg-[#ccff00]/10 text-[#ccff00] text-right'}`}>{m.text}</div>)}</div>
+               <form onSubmit={async(e)=>{e.preventDefault(); if(!gptInput)return; setDb(p=>({...p,chatHistory:[...p.chatHistory,{role:'user',text:gptInput}]})); setGptInput(''); const r=await deepseekChat("VendorGPT: "+gptInput); setDb(p=>({...p,chatHistory:[...p.chatHistory,{role:'ai',text:r}]}));}} className="mt-4 flex gap-2">
+                 <input className="flex-1 bg-[#222] border-none p-3 text-white text-sm" value={gptInput} onChange={e=>setGptInput(e.target.value)} placeholder="CMD..." />
+                 <button className="bg-[#ccff00] text-black px-4 font-bold">>></button>
+               </form>
+             </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  /* ---------- LOGICAL PAYMENT MODAL (Fixed) ---------- */
+  function FakeRazorModal({ paymentModal, onClose }){
+    const { amount, onSuccess } = paymentModal;
+    const [method, setMethod] = useState(null); // 'upi', 'card', 'net'
+    const [status, setStatus] = useState('idle'); // idle, processing, verified, success
+
+    function pay(){ 
+        if(!method) return;
+        setStatus('processing'); 
+        setTimeout(()=>{ setStatus('verified'); }, 1500);
+        setTimeout(()=>{ setStatus('success'); }, 3000);
+        
+        // FIXED: Using async/await to prevent freeze
+        setTimeout(async ()=>{ 
+            let methodLabel = "Online Payment";
+            if(method === 'upi') methodLabel = "UPI (GPay)";
+            if(method === 'card') methodLabel = "Visa Card **4242";
+            
+            // Wait for App to handle logic before closing logic runs
+            if (onSuccess) {
+                await onSuccess({ id:'PAY-'+Date.now(), status:'success', methodName: methodLabel }); 
+            }
+            onClose(); 
+        }, 4500); 
+    }
+
+    return (
+      <div className="razor-overlay">
+        <div className="razor-modal relative overflow-hidden">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6 relative z-10">
+             <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 bg-[#3b82f6] rounded flex items-center justify-center text-white font-bold text-xs"><i className="fa-solid fa-shield-halved"></i></div>
+                 <span className="font-bold text-white tracking-wide">Razorpay <span className="text-[10px] bg-white/10 px-1 rounded text-gray-400">TEST</span></span>
+             </div>
+             <div className="font-mono text-xl font-bold text-white">{formatCurrency(amount)}</div>
+          </div>
+
+          {/* Body */}
+          <div className="space-y-3 mb-6 relative z-10">
+             <div onClick={()=>setMethod('upi')} className={`pay-option p-4 rounded-xl cursor-pointer flex justify-between items-center bg-[#111] ${method==='upi'?'selected':''}`}>
+                 <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" className="w-6" /></div>
+                     <div><div className="text-sm font-bold text-white">UPI / GPay</div><div className="text-[10px] text-gray-500">Fastest</div></div>
+                 </div>
+                 <div className={`w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center ${method==='upi'?'bg-[#3b82f6] border-none':''}`}>{method==='upi' && <i className="fa-solid fa-check text-[10px] text-white"></i>}</div>
+             </div>
+
+             <div onClick={()=>setMethod('card')} className={`pay-option p-4 rounded-xl cursor-pointer flex justify-between items-center bg-[#111] ${method==='card'?'selected':''}`}>
+                 <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded bg-gray-800 flex items-center justify-center text-white"><i className="fa-brands fa-cc-visa text-2xl"></i></div>
+                     <div><div className="text-sm font-bold text-white">Card</div><div className="text-[10px] text-gray-500">Visa / MasterCard</div></div>
+                 </div>
+                 <div className={`w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center ${method==='card'?'bg-[#3b82f6] border-none':''}`}>{method==='card' && <i className="fa-solid fa-check text-[10px] text-white"></i>}</div>
+             </div>
+          </div>
+
+          {/* Pay Button */}
+          <button onClick={pay} disabled={status!=='idle' || !method} className={`w-full py-4 rounded-xl font-bold text-white relative overflow-hidden transition-all ${!method ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#3b82f6] hover:scale-[1.02] shadow-[0_0_20px_rgba(59,130,246,0.4)]'}`}>
+             {status==='idle' && `PAY ${formatCurrency(amount)}`}
+             {status==='processing' && <span className="animate-pulse"><i className="fa-solid fa-circle-notch fa-spin mr-2"></i> PROCESSING...</span>}
+             {status==='verified' && <span className="text-white"><i className="fa-solid fa-lock mr-2"></i> VERIFYING...</span>}
+             {status==='success' && <span className="text-white"><i className="fa-solid fa-check-circle mr-2"></i> PAID!</span>}
+          </button>
+          
+          <button onClick={onClose} className="w-full py-4 text-xs text-gray-500 hover:text-white transition-colors">CANCEL TRANSACTION</button>
+        </div>
+      </div>
+    );
+  }
+
+  function NavIcon({ icon, active, onClick, badge }){
+    return (
+      <button onClick={onClick} className={`relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${active ? 'bg-white/10 text-[#ccff00] scale-110 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'text-gray-500 hover:text-white'}`}>
+        <i className={`fa-solid ${icon} text-xl`}></i>
+        {badge && <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#ccff00] text-black rounded-full text-[9px] font-black flex items-center justify-center">{badge}</span>}
+      </button>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
